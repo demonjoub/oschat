@@ -41,19 +41,16 @@ export class ConversationService {
     if (room) {
       const { conversationId } = room
       try {
-        // this.socketService.createRoom(conversationId.toString(), member[0])
+        this.socketService.createRoom(conversationId.toString(), member[0])
       } catch (e) {
         console.error("ConversationService.Insert Error", e)
       }
       return room
     }
 
-    console.log('room', room)
-
     try {
       const res = await this.conversationRepository.save(info)
       const { conversationId } = res
-      console.log(conversationId)
       this.socketService.createRoom(conversationId.toString(), member[0])
       return res;
     } catch (e) {
@@ -133,18 +130,21 @@ export class ConversationService {
         conversation.unitcode = rooms[i].unitcode;
         conversation.name = rooms[i].name;
 
-        console.log(userId, messages.userId)
+        if (isEmpty(messages?.userId)) {
+          continue
+        }
+        
         if (read) {
           conversation.read = {
             conversationId: read.conversationId,
             readBy: read?.readBy,
-            isread: userId == messages.userId ? true : read?.readBy == userId,
+            isread: userId == messages?.userId ? true : read?.readBy == userId,
           }
         } else {
           conversation.read = {
             conversationId: `${conversation.id}`,
             readBy: userId,
-            isread: userId == messages.userId
+            isread: userId == messages?.userId
           }
         }
 
@@ -153,12 +153,13 @@ export class ConversationService {
         if (messages) {
           conversation.message = {
             body: messages.message,
-            userId: messages.userId,
+            userId: messages?.userId,
             createAt: messages.createAt
           }
         }
         res.push(conversation)
       }
+
       const resp = orderBy(res, ['message.createAt'], ['desc']).filter(conversationInfo => !isEmpty(conversationInfo.message))
       return resp
     } catch (e) {
