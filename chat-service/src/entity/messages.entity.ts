@@ -32,7 +32,4 @@ export class MessagesEntity {
 
   @Column({ default: () => false })
   status: boolean
-
-
-
 }

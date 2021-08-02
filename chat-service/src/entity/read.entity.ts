@@ -11,4 +11,7 @@ export class ReadEntity {
 
   @Column({ default: () => false })
   isread: boolean
+
+  @Column({ type: 'text' })
+  readByMessage: string
 }

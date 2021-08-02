@@ -54,8 +54,8 @@ export class ConversationService {
       const res = await this.conversationRepository.save(info)
       const { conversationId } = res
       console.log(conversationId)
-      // this.socketService.createRoom(conversationId.toString(), member[0])
-      // return res;
+      this.socketService.createRoom(conversationId.toString(), member[0])
+      return res;
     } catch (e) {
       console.error("ConversationService.Insert Error", e)
       throw e
@@ -108,7 +108,7 @@ export class ConversationService {
     try {
       const rooms = await getConnection().getRepository(ConversationEntity)
         .createQueryBuilder("conversation")
-        .where("conversation.member like :member", { member: `%${userId}%` }) 
+        .where("conversation.member like :member", { member: `%${userId}%` })
         .getMany();
 
       for (let i = 0; i < rooms.length; i++) {
@@ -132,12 +132,19 @@ export class ConversationService {
         conversation.unitaddr = rooms[i].unitaddr;
         conversation.unitcode = rooms[i].unitcode;
         conversation.name = rooms[i].name;
-       
+
+        console.log(userId, messages.userId)
         if (read) {
           conversation.read = {
             conversationId: read.conversationId,
-            readBy: read.readBy,
-            isread: read.isread
+            readBy: read?.readBy,
+            isread: userId == messages.userId ? true : read?.readBy == userId,
+          }
+        } else {
+          conversation.read = {
+            conversationId: `${conversation.id}`,
+            readBy: userId,
+            isread: userId == messages.userId
           }
         }
 
@@ -152,7 +159,7 @@ export class ConversationService {
         }
         res.push(conversation)
       }
-      const resp = orderBy(res, ['message.createAt'],['desc']).filter(conversationInfo => !isEmpty(conversationInfo.message))
+      const resp = orderBy(res, ['message.createAt'], ['desc']).filter(conversationInfo => !isEmpty(conversationInfo.message))
       return resp
     } catch (e) {
       throw e
